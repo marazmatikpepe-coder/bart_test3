@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+<meta name="theme-color" content="#faf9f5">
+<script>try{var t=localStorage.bart_theme;if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<title>Bart — ИИ-ассистент</title>
+<link rel="icon" href="logo.svg">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="https://i.ibb.co/1Y0KgtzK/f2802d8f-a790-40ee-b105-7fc4fa84f4c3.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bart">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="github-dark.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<section id="splash" class="screen"><img class="logo" src="logo.svg" alt="Bart"></section>
+
+<section id="auth" class="screen" hidden>
+  <div class="card">
+    <img class="logo" src="logo.svg" alt="Bart">
+    <h1>Bart</h1><p class="sub">ИИ-ассистент: текст, код, фото, файлы, картинки</p>
+    <div class="tabs" role="tablist"><button type="button" data-tab="login" class="on" role="tab">Вход</button><button type="button" data-tab="reg" role="tab">Регистрация</button></div>
+
+    <form id="f-login" novalidate>
+      <label>Почта<input id="li-em" type="email" inputmode="email" placeholder="name@mail.com" autocomplete="username" autocapitalize="off" spellcheck="false"></label>
+      <label>Пароль<span class="pw"><input id="li-pw" type="password" placeholder="Ваш пароль" autocomplete="current-password"><button type="button" class="eye" data-eye aria-label="Показать пароль"></button></span></label>
+      <button type="button" class="lnk" id="reset">Забыли пароль?</button>
+      <button class="btn" type="submit">Войти</button>
+      <p class="swap">Нет аккаунта? <button type="button" class="lnk" data-go="reg">Зарегистрироваться</button></p>
+    </form>
+
+    <form id="f-reg" novalidate hidden>
+      <label>Почта<input id="r-em" type="email" inputmode="email" placeholder="name@mail.com" autocomplete="email" autocapitalize="off" spellcheck="false"></label>
+      <label>Придумайте пароль<span class="pw"><input id="r-pw" type="password" placeholder="От 6 символов" autocomplete="new-password"><button type="button" class="eye" data-eye aria-label="Показать пароль"></button></span></label>
+      <label>Повторите пароль<span class="pw"><input id="r-pw2" type="password" placeholder="Ещё раз" autocomplete="new-password"><button type="button" class="eye" data-eye aria-label="Показать пароль"></button></span></label>
+      <button class="btn" type="submit">Создать аккаунт</button>
+      <p class="swap">Уже есть аккаунт? <button type="button" class="lnk" data-go="login">Войти</button></p>
+    </form>
+
+    <div class="or"><span>или</span></div>
+    <button type="button" class="btn alt gbtn" id="google"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.3-2.1 3.5-5.2 3.5-8.8z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 7.9-2.9l-3.9-3c-1.1.7-2.5 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9H1.4v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.4 14.4a7.2 7.2 0 0 1 0-4.8V6.5H1.4a12 12 0 0 0 0 11z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.4 6.5l4 3.1C6.3 6.9 8.9 4.8 12 4.8z"/></svg> Продолжить с Google</button>
+    <p id="inapp" class="note" hidden>Вы открыли сайт во встроенном браузере (Telegram, Instagram и т. п.) — Google отсюда не пускает. Откройте ссылку в Chrome или Safari.</p>
+    <p id="err" class="err" role="alert"></p>
+    <button type="button" class="lnk" id="skip" hidden>Продолжить без аккаунта</button>
+  </div>
+</section>
+
+<section id="verify" class="screen" hidden>
+  <div class="card">
+    <img class="logo" src="logo.svg" alt="">
+    <h1>Подтвердите почту</h1>
+    <p class="sub">Мы отправили письмо со ссылкой на <b id="vem"></b>. Перейдите по ссылке (проверьте «Спам»), затем вернитесь сюда.</p>
+    <button class="btn" id="vok">Я подтвердил</button>
+    <div class="row"><button class="btn alt" id="vre">Отправить ещё раз</button><button class="btn alt" id="vout">Выйти</button></div>
+    <p id="verr" class="err"></p>
+  </div>
+</section>
+
+<div id="app" hidden>
+  <div id="shade"></div>
+  <aside id="side">
+    <div class="brand"><img src="logo.svg" alt="">Bart</div>
+    <div class="newrow"><button class="btn" id="new"><span data-ic="plus"></span> Новый чат</button><button class="icb" id="newg" title="Призрачный чат (не сохраняется)" data-ic="ghost"></button></div>
+    <div class="srch"><span data-ic="search"></span><input id="q" placeholder="Поиск по чатам"></div>
+    <div id="list"></div>
+    <button class="btn alt" id="inst" hidden><span data-ic="download"></span> Установить приложение</button>
+    <div class="foot"><div><div id="who"></div><small id="dev"></small></div><button class="icb" id="diag" title="Проверка моделей и прокси" hidden>🔧</button><button class="icb" id="theme" title="Тема" data-ic="theme"></button><button class="icb" id="out" title="Выйти" data-ic="logout"></button></div>
+  </aside>
+  <main>
+    <header><button class="icb" id="menu" data-ic="menu"></button><span id="ttl">Новый чат</span><button class="icb" id="gtoggle" title="Призрачный чат: не сохраняется" data-ic="ghost"></button><button class="icb" id="share" title="Поделиться чатом" data-ic="share" hidden></button></header>
+    <div id="hero">
+      <img src="logo.svg" alt="">
+      <h2>Чем помочь?</h2>
+      <p class="gnote">Этот чат не сохраняется: он пропадёт при перезагрузке страницы</p>
+      <div class="sug"><button>Нарисуй уютный домик в лесу</button><button>Напиши код сайта-визитки</button><button>Разбери мой файл</button><button>Опиши, что на фото</button></div>
+    </div>
+    <div id="msgs"></div>
+    <footer>
+      <div id="chips"></div>
+      <div class="box">
+        <button class="icb" id="clip" data-ic="attachFile" title="Файл"></button>
+        <button class="icb" id="cam" data-ic="camera" title="Фото"></button>
+        <button class="icb" id="mic" data-ic="mic" title="Голосовой ввод"></button>
+        <textarea id="inp" rows="1" placeholder="Напишите Bart…"></textarea>
+        <button class="send" id="go" data-ic="send"></button>
+      </div>
+      <input type="file" id="fi" multiple hidden>
+      <p class="hint">Bart может ошибаться. Проверяйте важное.</p>
+      <input type="file" id="ci" accept="image/*" capture="environment" hidden>
+    </footer>
+    <div id="robar"><span>Общий чат — только просмотр</span><div><button class="btn alt" id="roopen">Открыть Bart</button><button class="btn" id="rocont">Продолжить в своём чате</button></div></div>
+  </main>
+</div>
+<button id="tobot" hidden aria-label="Вниз">↓</button>
+<div id="drop" hidden><div>Отпустите файлы, чтобы прикрепить</div></div>
+<div id="lb" hidden><button class="icb" id="lbx" data-ic="close" aria-label="Закрыть"></button><button class="lbn" id="lbp" aria-label="Назад">‹</button><img id="lbi" alt=""><button class="lbn" id="lbn" aria-label="Вперёд">›</button><span id="lbc"></span></div>
+<div id="toast" hidden></div>
+<div id="modal" hidden><button class="icb" id="mx" data-ic="close"></button><iframe sandbox="allow-scripts"></iframe></div>
+
+<script src="marked.min.js"></script>
+<script src="purify.min.js"></script>
+<script src="highlight.min.js"></script>
+<script type="module" src="js/app.js"></script>
+<script>
+/* Логотип: сразу показываем встроенный logo.svg, затем подменяем вашим логотипом с imgbb, если он доступен (≤4 с). Без VPN в закрытых сетях остаётся встроенный. */
+(function(){var U='https://i.ibb.co/1pCX2Nr/image-Photoroom.png',im=new Image(),t=setTimeout(function(){im.onload=im.onerror=null},4000);
+ im.onload=function(){clearTimeout(t);[].forEach.call(document.querySelectorAll('img[src="logo.svg"]'),function(e){e.src=U});var l=document.querySelector('link[rel~=icon]');if(l)l.href=U};
+ im.src=U})();
+</script>
+</body>
+</html>

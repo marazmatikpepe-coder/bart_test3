@@ -1,0 +1,38 @@
+{
+  "name": "Bart — ИИ-ассистент",
+  "short_name": "Bart",
+  "description": "Bart: чат, код, файлы, картинки",
+  "lang": "ru",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#faf9f5",
+  "theme_color": "#faf9f5",
+  "icons": [
+    {
+      "src": "https://i.ibb.co/1pCX2Nr/image-Photoroom.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://i.ibb.co/1pCX2Nr/image-Photoroom.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://i.ibb.co/1Y0KgtzK/f2802d8f-a790-40ee-b105-7fc4fa84f4c3.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "https://i.ibb.co/1Y0KgtzK/f2802d8f-a790-40ee-b105-7fc4fa84f4c3.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
