@@ -1,5 +1,6 @@
 // Cloudflare Worker: прокси для Groq / OpenRouter / imgbb / ModelScope + картинки через Workers AI (бесплатно, без ключей).
 // Деплой: dash.cloudflare.com → Workers & Pages → ваш воркер → Edit code → вставить этот код → Deploy.
+// Без VPN: Settings → General → Placement → Smart (или placement.region в proxy/wrangler.toml) — чтобы воркер не исполнялся на узле в РФ, откуда Groq/OpenRouter отвечают 403.
 // Для запасной генерации картинок (Flux): Settings → Bindings → Add → Workers AI → имя переменной: AI.
 // По желанию: Settings → Variables → Secret MS_KEY = ключ ModelScope (тогда ключ из js/config.js не нужен).
 const ALLOW = 'Authorization, Content-Type, X-ModelScope-Async-Mode, X-ModelScope-Task-Type';
@@ -80,6 +81,22 @@ export default {
       if (!/(^|\.)(modelscope\.cn|aliyuncs\.com|ibb\.co|pollinations\.ai)$/.test(t.hostname)) return json({ error: 'forbidden' }, 403);
       const r = await fetch(t);
       return new Response(r.body, { status: r.status, headers: { ...CORS, 'Content-Type': r.headers.get('Content-Type') || 'image/png' } });
+    }
+
+    // /x/deepseek|mistral|zai|qwen/… — провайдеры, которые не закрыты по региону (работают без VPN из РФ).
+    // Ключи — секретами воркера: DEEPSEEK_KEY, MISTRAL_KEY, ZAI_KEY, QWEN_KEY (или их присылает сайт в Authorization).
+    const xm = u.pathname.match(/^\/x\/(deepseek|mistral|zai|qwen)(\/.*)?$/);
+    if (xm) {
+      const xb = { deepseek: 'https://api.deepseek.com/v1', mistral: 'https://api.mistral.ai/v1', zai: 'https://api.z.ai/api/paas/v4', qwen: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1' }[xm[1]];
+      const xs = { deepseek: env.DEEPSEEK_KEY, mistral: env.MISTRAL_KEY, zai: env.ZAI_KEY, qwen: env.QWEN_KEY }[xm[1]];
+      if (!xs && !req.headers.get('Authorization')) return json({ error: 'ключ ' + xm[1] + ' не задан' }, 401);
+      const xh = new Headers(req.headers);
+      ['host', 'origin', 'referer', 'cf-connecting-ip', 'x-forwarded-for'].forEach(k => xh.delete(k));
+      if (xs) xh.set('Authorization', 'Bearer ' + xs);
+      const xr = await fetch(xb + (xm[2] || '/') + u.search, { method: req.method, headers: xh, body: req.method === 'GET' ? undefined : req.body });
+      const xrh = new Headers(xr.headers);
+      Object.entries(CORS).forEach(([k, v]) => xrh.set(k, v));
+      return new Response(xr.body, { status: xr.status, headers: xrh });
     }
 
     // /groq/…, /or/… (OpenRouter), /imgbb/… — прокси к API, закрытым в ряде стран.

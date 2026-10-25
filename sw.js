@@ -1,6 +1,6 @@
 /* Service worker Bart: даёт установку как приложение и открытие без сети.
    Стратегия «сначала сеть, потом кэш» — после обновления сайта всегда видна свежая версия. */
-const V = 'bart-v1';
+const V = 'bart-v3';
 const SHELL = ['./', 'index.html', 'css/style.css', 'js/app.js', 'js/config.js', 'js/firebase-config.js', 'marked.min.js', 'purify.min.js',
   'highlight.min.js', 'github-dark.min.css', 'firebase.js', 'logo.svg', 'manifest.webmanifest'];
 self.addEventListener('install', e => {

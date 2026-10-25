@@ -1,0 +1,14 @@
+# Для деплоя через CLI:  npx wrangler deploy   (из папки proxy/)
+# Главное — placement: воркер исполняется в дата-центре рядом с указанным регионом, а не на узле в РФ,
+# откуда Groq/OpenRouter отвечают 403 по региону. Без VPN у пользователей из РФ это и есть главная причина «модели молчат».
+name = "bart-proxy"           # или имя вашего текущего воркера
+main = "worker.js"
+compatibility_date = "2026-01-01"
+
+[ai]
+binding = "AI"                # Workers AI — запасные модели и картинки
+
+[placement]
+region = "aws:eu-central-1"   # Франкфурт; при желании "aws:us-east-1"
+
+# Секреты (не в этом файле): npx wrangler secret put GROQ_KEY | OR_KEY | MS_KEY | IMGBB_KEY | DEEPSEEK_KEY | MISTRAL_KEY | ZAI_KEY | QWEN_KEY
