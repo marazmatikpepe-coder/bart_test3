@@ -96,9 +96,9 @@ async function chain(kind,prefMs){
   gq.push(['groq','openai/gpt-oss-120b'],['groq','llama-3.3-70b-versatile']);
   /* DeepSeek на ModelScope: берём самую новую версию из списка (V4 → V3.2 → …) */
   const ds=s.filter(m=>/^deepseek-ai\/deepseek-v\d/i.test(m)&&!/distill/i.test(m)).sort((a,b)=>vnum(b)-vnum(a)).slice(0,2),
-   mq=hasMs?(ds.length?ds:['deepseek-ai/DeepSeek-V4','deepseek-ai/DeepSeek-V3.2']).map(m=>['ms',m]):[];
+   mq=hasMs?[...(ds.length?ds:['deepseek-ai/DeepSeek-V4','deepseek-ai/DeepSeek-V3.2']),...pk(s,[/qwen3?-coder.*(480|plus|235)/i,/moonshotai\/kimi-k2/i,/zhipuai\/glm-[4-9]/i,/minimax.*m\d/i]).filter(m=>!/-v$|vision|vl/i.test(m))].map(m=>['ms',m]):[];
   /* OpenRouter (бесплатные :free модели, если задан OR_KEY) */
-  const orq=[];for(const re of [/deepseek/i,/qwen.*coder/i,/gpt-oss-120b/i,/llama-3\.3-70b/i,/qwen3.*(235|80|32)b/i])orl.filter(m=>re.test(m)&&!/vl|vision/i.test(m)).slice(0,1).forEach(m=>orq.push(['or',m]));
+  const orq=[];for(const re of [/deepseek/i,/qwen.*coder/i,/kimi-k2/i,/glm-4/i,/gpt-oss-120b/i,/llama-3\.3-70b/i,/qwen3.*(235|80|32)b/i])orl.filter(m=>re.test(m)&&!/vl|vision/i.test(m)).slice(0,1).forEach(m=>orq.push(['or',m]));
   /* провайдеры без региональных блокировок (если заданы ключи) */
   const zg=zl.filter(m=>/^glm-\d/i.test(m)&&!/v$|vision|-v-/i.test(m)).sort((a,b)=>glmv(b)-glmv(a)),
    xs=[...(kind=='code'?[...pk(dsl,[/deepseek-chat/i]).map(m=>['ds',m]),...pk(qwl,[/qwen3?-coder-(plus|flash)|coder-plus/i,/qwen-(max|plus)/i]).slice(0,1).map(m=>['qw',m]),...pk(mil,[/codestral/i,/mistral-large/i]).slice(0,1).map(m=>['mi',m]),...[zg[0],zg.find(m=>/flash/i.test(m))].filter(Boolean).map(m=>['zai',m])]
@@ -217,7 +217,7 @@ async function editImg(am,last,sig,src){
  try{am.img=await up(await(await fetch(u)).blob())}catch{}}
 const CREATIVE_RE=/(стих|рассказ|сочини|придумай|сказк|песн|слоган|поэм|сценари|шутк|креатив|название для|идеи для)/i;
 function checkCode(txt){const errs=[],re=/```([\w+#-]*)[ \t]*([^\n]*)\n([\s\S]*?)```/g;let m;
- const synt=(code,label)=>{if(/^\s*(import|export)\s/m.test(code)||/<[A-Z][A-Za-z]*[\s>\/]/.test(code))return;try{new Function('return (async()=>{'+code.replace(/^#!.*\n/,'')+'\n})')}catch(e){errs.push(label+': '+e.message)}};
+ const synt=(code,label)=>{if(/^\s*(import|export)\s/m.test(code)||/<([A-Z][\w.]*)[^<>]*>[\s\S]*<\/\1>|<[A-Z][\w.]*[^<>]*\/>/.test(code))return;try{new Function('return (async()=>{'+code.replace(/^#!.*\n/,'')+'\n})')}catch(e){errs.push(label+': '+e.message)}};
  while((m=re.exec(txt))&&errs.length<3){const lang=(m[1]||'').toLowerCase(),name=(m[2]||'').trim().split(/\s+/)[0]||'',body=m[3],ext=(name.includes('.')?name.split('.').pop():lang).toLowerCase(),label=name||lang;
   if(ext=='json'&&!/tsconfig|jsconfig|eslintrc/i.test(name)){try{JSON.parse(body)}catch(e){errs.push(label+': '+e.message)}}
   else if(ext=='js'||ext=='javascript')synt(body,label);
@@ -248,7 +248,8 @@ function checkHook(id){
   cx.forEach(function(c){var t=document.createElement('canvas');t.width=t.height=24;var g=t.getContext('2d');g.drawImage(c,0,0,24,24);var d=g.getImageData(0,0,24,24).data,s=true,i;for(i=4;i<d.length;i+=4)if(d[i]!=d[0]||d[i+1]!=d[1]||d[i+2]!=d[2]||d[i+3]!=d[3]){s=false;break}if(s)p('canvas пустой: на нём ничего не нарисовано (белый экран)')});
   if(!document.querySelector('canvas,svg,img,video')&&!(document.body&&document.body.innerText.trim()))p('страница пустая: на экране ничего нет');
  }catch(e){}},1700)}
-const withShim=(html,extra='')=>{const sc='<script>('+viewShim.toString()+')();'+extra+'<\/script>';
+const oneLine=f=>f.toString().replace(/\n\s*/g,' ');/* без переводов строк, чтобы не сдвигать номера строк в ошибках */
+const withShim=(html,extra='')=>{const sc='<script>('+oneLine(viewShim)+')();'+extra+'<\/script>';
  return /<head[^>]*>/i.test(html)?html.replace(/<head[^>]*>/i,x=>x+sc):/<html[^>]*>/i.test(html)?html.replace(/<html[^>]*>/i,x=>x+sc):/^\s*<!doctype[^>]*>/i.test(html)?html.replace(/^\s*<!doctype[^>]*>/i,x=>x+sc):sc+html};
 const openFrame=h=>{const fr=$('#modal iframe');fr.onload=()=>{try{fr.contentWindow.focus()}catch(e){}};fr.srcdoc=h;$('#modal').hidden=false;setTimeout(()=>fr.focus(),80)};
 /* запуск HTML в скрытой песочнице на ~2 с и проверка играбельности */
@@ -261,7 +262,23 @@ function runtimeCheck(txt){
   let t;const done=()=>{clearTimeout(t);removeEventListener('message',on);f.remove();
    res([...new Set(errs)].filter(e=>!/SecurityError|Script error|ResizeObserver|cookie|blocked a frame|play\(\)|NotAllowedError|AudioContext|autoplay|allow-modals|Blocked/i.test(e)).slice(0,3).map(e=>/^(в игре|управление|canvas|страница)/.test(e)?e:'ошибка при запуске в браузере: '+e))};
   t=setTimeout(done,2300);document.body.append(f);
-  f.srcdoc=withShim(h,'('+checkHook.toString()+')('+JSON.stringify(id)+');')})}
+  f.srcdoc=withShim(h,'('+oneLine(checkHook)+')('+JSON.stringify(id)+');')})}
+const htmlOf=t=>[...t.matchAll(/```(?:html?)[^\n]*\n([\s\S]*?)```/gi)].map(x=>x[1]).find(x=>/<script|<canvas/i.test(x))||'';
+const snips=(errs,t)=>{const h=htmlOf(t).split('\n');return errs.map(e=>{const n=+(e.match(/строка (\d+)/)?.[1]||0);if(!n||!h[n-1])return '- '+e;const a=Math.max(0,n-3),b=Math.min(h.length,n+1);return '- '+e+'\n  фрагмент файла (строки '+(a+1)+'–'+b+'):\n'+h.slice(a,b).map((l,i)=>'  '+(a+i+1)+'| '+l.slice(0,160)).join('\n')}).join('\n')};
+/* «качество игры»: мягкие замечания — чего не хватает, чтобы это была игра, а не заготовка */
+function gameLint(t){const h=htmlOf(t);if(!h||!/<canvas|requestAnimationFrame/i.test(h))return[];const n=h.split('\n').length,o=[];
+ if(n<140)o.push('качество игры: слишком примитивная — всего '+n+' строк (нужно 200+): добавь механики, разные препятствия/врагов, анимации, частицы, фон');
+ if(!/game\s*over|игра окончена|конец игры|проиграл|проигрыш/i.test(h))o.push('качество игры: нет экрана «Игра окончена» с перезапуском');
+ if(!/menu|меню|старт|начать|нажмите|press|tap to|тапните/i.test(h))o.push('качество игры: нет стартового экрана с подсказкой управления');
+ if(!/best|рекорд|high\s*score|hiscore/i.test(h))o.push('качество игры: нет рекорда');
+ if(!/pause|пауз/i.test(h))o.push('качество игры: нет паузы (P/Esc)');
+ return o}
+/* полная диагностика ответа: запуск в песочнице (синтаксис, ошибки выполнения, управление, пустой экран) + статические проверки */
+async function diagnose(t,game){const rt=await runtimeCheck(t),syn=rt.some(e=>/SyntaxError/.test(e)),errs=[...rt,...(syn?[]:checkCode(t))];if(game)errs.push(...gameLint(t));return errs.slice(0,6)}
+const errScore=e=>e.reduce((a,x)=>a+(/^качество игры/.test(x)?1:10),0);
+const COMPLAINT=/исправ|почин|не работает|не запуска|ошибк|баг|белый экран|не двига|не управ|не прыга|не реагир|крашит|слома|не открыва|пуст|не видно|зависа|лагает/i;
+/* убираем дежурное «Конечно, исправлю…» в начале ответа */
+const stripFiller=t=>(t||'').replace(/^\s*(?:да,?\s*)?(?:конечно|хорошо|разумеется|безусловно|отлично|окей|понял|поняла|принято|давайте)(?=[\s,!.])[^.!?\n]{0,70}[.!]\s*/i,'');
 /* скользящее резюме: всё, что выпало из окна последних 8 сообщений, сжимается в заметку — Bart не «забывает» начало долгого чата */
 let SUMMING=false;
 async function summarize(c){const n=c.msgs.length,upto=n-8,from=c.sumN||0;if(SUMMING||upto-from<4)return;SUMMING=true;
@@ -325,14 +342,15 @@ async function run(c,am){
  if(!att.some(x=>x.k=='img')&&EDIT_RE.test(last.t||'')&&REF_RE.test(last.t||'')&&!ASK_RE.test(last.t||'')&&!NOTIMG_RE.test(last.t||'')){const pm=prevImg(c);if(pm)return editImg(am,last,ctl.signal,{k:'img',u:pm.img,pr:pm.pr||'',d:DATA.get(pm)})}
  if(last.e)return editImg(am,last,ctl.signal);
  if(IMG_RE.test(last.t||'')&&!att.some(a=>a.k=='img'))return draw(am,last.t,ctl.signal);
- const img=att.some(a=>a.k=='img'),code=CODE_RE.test(last.t||'')||att.some(a=>a.k=='file'&&CODE_EXT.test(a.n))||GAME_REQ(last.t||'',hist),big=att.some(a=>a.x&&a.x.length>5000);
- const hard=REASON_RE.test(last.t||'')||att.some(a=>a.x&&a.x.length>8000),lab=(x,mdl)=>{am.m=(am.pre?am.pre+' → ':'')+x;if(mdl)am.via=mdl.split('/').pop();live(am)};let desc=null,plan='';
+ const img=att.some(a=>a.k=='img'),code=CODE_RE.test(last.t||'')||att.some(a=>a.k=='file'&&CODE_EXT.test(a.n))||GAME_REQ(last.t||'',hist)||(COMPLAINT.test(last.t||'')&&hist.slice(-4).some(m=>m.r!='user'&&/```/.test(m.t||''))),big=att.some(a=>a.x&&a.x.length>5000);
+ const hard=REASON_RE.test(last.t||'')||att.some(a=>a.x&&a.x.length>8000),lab=(x,mdl)=>{am.m=(am.pre?am.pre+' → ':'')+x;if(mdl)am.via=mdl.split('/').pop();live(am)};let desc=null,plan='',diag='';
  const creative=CREATIVE_RE.test(last.t||''),short=(last.t||'').length<40&&!att.length,wantsFiles=/(файл|pdf|docx|xlsx|pptx|презентац|документ|таблиц|архив|zip|csv|сайт|страниц|html|скрипт|код)/i.test(last.t||'');
  const ctxExtra=()=>{const d=new Date(),pt=['\n\nСЕЙЧАС: '+d.toLocaleDateString('ru-RU',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+', '+d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})+'.'],
    im=att.filter(a=>a.k=='img'),fl=att.filter(a=>a.x);
    if(im.length)pt.push('К последнему сообщению приложено изображений: '+im.length+' ('+im.slice(0,4).map(a=>a.n).join(', ')+').');
    if(fl.length)pt.push('К последнему сообщению приложены файлы (их текст — в самом сообщении): '+fl.map(a=>a.n).join(', ')+'.');
    if(KIND=='code'&&(GAME_RE.test(last.t||'')||hist.slice(-4).some(m=>m.r!='user'&&/requestAnimationFrame|<canvas/i.test(m.t||''))))pt.push(GAME_KIT);
+   if(diag)pt.push('\n[АВТОДИАГНОСТИКА последнего файла — код реально запущен, и найдены ошибки. Исправь именно их, остальное не ломай, выдай файл целиком]\n'+diag);
    if(c.sum)pt.push('\n[РЕЗЮМЕ ранней части беседы — факты, на которые нужно опираться]\n'+c.sum);
    if(plan)pt.push('\n[ВНУТРЕННИЙ ПЛАН решения — следуй ему, но не пересказывай его пользователю]\n'+plan);
    return pt.join('\n')};
@@ -348,16 +366,28 @@ async function run(c,am){
   /* ответ упёрся в лимит длины — просим продолжить с места обрыва (до 6 раз) */
   for(let i=0;i<6&&CUT&&LAST;i++){const [p,m]=LAST,tail=(am.t+(QU.get(am)||'')).slice(-Math.floor(P[p].budget*.5));
    await tryChain([[p,m]],(pp,a)=>[...mk(pp,a),{role:'assistant',content:tail},{role:'user',content:'Ответ оборвался из-за лимита длины. Продолжи ровно с места обрыва: не повторяй написанное, не начинай новый блок кода и не пиши пояснений — только следующие символы.'}],d=>put(am,d),ctl.signal,lab,()=>{},opt)}
-  /* самопроверка: ловим синтаксические ошибки в JS/JSON/HTML и один раз просим исправить */
-  if(k=='code'){await flush(am);const prev=am.t,errs=checkCode(prev);if(!errs.length)errs.push(...await runtimeCheck(prev));
-   if(errs.length&&LAST&&prev.length<P[LAST[0]].budget*.9){const [p,m]=LAST;console.warn('code check:',errs);
-    /* исправление готовится «за кадром»: готовый ответ остаётся на экране, подмена — мгновенная и только если новая версия действительно лучше */
-    let fix='';lab('Проверяю код…');
-    try{await tryChain([[p,m]],(pp,kk)=>[...mk(pp,kk),{role:'assistant',content:prev},{role:'user',content:'Автоматическая проверка нашла ошибки в твоём коде:\n'+errs.join('\n')+'\nИсправь их и выдай ответ целиком: все файлы полностью, в том же формате (блоки с именами файлов). В конце одной строкой напиши, что исправлено.'}],d=>fix+=d,ctl.signal,()=>{},()=>{fix=''},{...opt,temp:.1});
-     fix=clean(fix).trim();const fences=t=>(t.match(/```/g)||[]).length;
-     if(fix.length>prev.length*.6&&fences(fix)>=fences(prev)&&fences(fix)%2==0){const e2=checkCode(fix),r2=e2.length?e2:await runtimeCheck(fix);if(r2.length<errs.length){am.t=fix;QU.delete(am);live(am)}}}
-    catch(e){if(e.name=='AbortError')throw e}
-    lab('Bart-beta',m)}}};
+  /* самопроверка: код реально запускается; найденные ошибки исправляются в фоне цепочкой РАЗНЫХ моделей (до 4 попыток) с точной диагностикой, подмена — только если стало лучше */
+  if(k=='code'){await flush(am);am.t=stripFiller(am.t);const prev=am.t,game=GAME_REQ(last.t||'',hist);let errs=[];if(/```/.test(prev))lab('Проверяю код…');try{errs=await diagnose(prev,game)}catch(e){if(e.name=='AbortError')throw e}if(!errs.length)lab('Bart-beta',LAST?LAST[1]:undefined);
+   if(errs.length&&LAST&&prev.length<30000){console.warn('code check:',errs);
+    const bad=LAST,all=await chain('code'),cands=[],sp=new Set([bad[0]]),same=x=>x[0]==bad[0]&&x[1]==bad[1];
+    for(const x of all){if(same(x))continue;if(!sp.has(x[0])){sp.add(x[0]);cands.push(x)}if(cands.length>=3)break}
+    for(const x of all){if(cands.length>=3)break;if(!cands.includes(x)&&!same(x))cands.push(x)}
+    cands.push(bad);
+    const hardErr=errs.some(e=>!/^качество игры/.test(e)),tries=cands.slice(0,hardErr?4:2);
+    let best={t:prev,e:errs},cur=prev,curE=errs;
+    for(let i=0;i<tries.length;i++){const x=tries[i];lab('Проверяю и дорабатываю код… ('+(i+1)+'/'+tries.length+')');
+     let fix='';
+     try{await tryChain([x],(pp,kk)=>[...mk(pp,kk),{role:'assistant',content:cur},{role:'user',content:'Автоматическая проверка запустила твой код и нашла проблемы:\n'+snips(curE,cur)+'\nИсправь именно их'+(game?' и доведи до полноценной игры':'')+': выдай ответ целиком, все файлы полностью и без сокращений, в том же формате (блоки с именами файлов). Не начинай со слов «Конечно/Хорошо». В конце одной строкой напиши, что исправлено.'}],d=>fix+=d,ctl.signal,()=>{},()=>{fix=''},{...opt,temp:.1})}catch(e){if(e.name=='AbortError')throw e;continue}
+     fix=stripFiller(clean(fix).trim());const fences=t=>(t.match(/```/g)||[]).length;
+     if(!(fix.length>prev.length*.6&&fences(fix)>=fences(prev)&&fences(fix)%2==0))continue;
+     let e2=[];try{e2=await diagnose(fix,game)}catch(e){if(e.name=='AbortError')throw e;continue}
+     if(errScore(e2)<errScore(best.e)){best={t:fix,e:e2};cur=fix;curE=e2}
+     if(!e2.length)break}
+    if(best.t!==prev){am.t=best.t;QU.delete(am);live(am)}
+    const left=best.e.filter(e=>!/^качество игры/.test(e));
+    if(left.length){am.t+='\n\n> ⚠️ Автопроверка запустила код и нашла ошибку, которую не удалось исправить автоматически: '+left[0].replace(/^ошибка при запуске в браузере: /,'')+'. Напишите «исправь» — Барт получит точный текст ошибки и фрагмент кода.';QU.delete(am);live(am)}
+    lab('Bart-beta',LAST?LAST[1]:undefined)}}};
+ if((code||img)&&!diag){const pa=hist.slice(-4).reverse().find(m=>m.r!='user'&&/```/.test(m.t||''));if(pa&&(COMPLAINT.test(last.t||'')||img)){try{lab('Запускаю код предыдущего ответа…');const e=await diagnose(pa.t,GAME_REQ(last.t||'',hist));if(e.length)diag=snips(e,pa.t)}catch(x){if(x.name=='AbortError')throw x}}}
  if(img&&(code||att.some(a=>a.x))){ // два шага: vision «видит», потом код/рассуждение отвечает
   desc='';const vmk=()=>[{role:'user',content:[{type:'text',text:'Подробно опиши изображение: что на нём изображено, весь видимый текст и код перепиши дословно, отдельно отметь сообщения об ошибках, предупреждения и элементы интерфейса.'},...build(hist,9000).slice(-1)[0].content.filter(x=>x.type=='image_url')]}];
   try{await tryChain(await chain('vision'),vmk,d=>desc+=d,ctl.signal,lab,()=>{desc=''});am.pre=am.m}catch(e){if(e.name=='AbortError')throw e;console.warn('vision failed',e);desc=NOVIS}
@@ -501,7 +531,7 @@ function patchHTML(host,html){const t=document.createElement('template');t.inner
   o.replaceWith(n);const pn=n.querySelector('pre');if(pn&&po){pn.scrollLeft=sl;pn.scrollTop=st}
   if(dt){const d=n.matches('details')?n:n.querySelector('details');if(d)d.open=true}});
  old.slice(nw.length).forEach(o=>o.remove())}
-let raf=0;function live(am){if(raf)return;raf=setTimeout(()=>{raf=0;const e=$('#msgs .m.a:last-child');if(!e||!S.chat)return;patchHTML($('.md',e),md(am.t,S.chat.id+'.'+(S.chat.msgs.length-1))||(am.gen?'':'<span class="dots"><i></i><i></i><i></i></span>'));const ph=$('.genph',e);if(am.gen&&!ph)$('.md',e).insertAdjacentHTML('afterend',genPH(am));else if(!am.gen&&ph)ph.remove();$('.meta',e).textContent=metaTxt(am);if(stick)toBot()},70)}
+let raf=0;function live(am){if(raf)return;raf=setTimeout(()=>{raf=0;const e=$('#msgs .m.a:last-child');if(!e||!S.chat)return;patchHTML($('.md',e),md(stripFiller(am.t),S.chat.id+'.'+(S.chat.msgs.length-1))||(am.gen?'':'<span class="dots"><i></i><i></i><i></i></span>'));const ph=$('.genph',e);if(am.gen&&!ph)$('.md',e).insertAdjacentHTML('afterend',genPH(am));else if(!am.gen&&ph)ph.remove();$('.meta',e).textContent=metaTxt(am);if(stick)toBot()},70)}
 async function send(){
  if(S.busy){ctl?.abort();return}
  const t=$('#inp').value.trim(),fl=S.files.filter(f=>f.ok),ed=(!!S.edit||autoEdit(t,S.files.filter(f=>f.ok)))&&fl.some(f=>f.k=='img');if(!t&&!fl.length||S.files.some(f=>!f.ok&&!f.err))return;
